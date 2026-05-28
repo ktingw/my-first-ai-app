@@ -98,6 +98,13 @@ export default function Home() {
             onDelete={() => {
               setTodos(todos.filter((_, index) => index !== i))
             }}
+            onEdit={(newText) => {
+              setTodos(
+                todos.map((todo, index) =>
+                  index === i ? { ...todo, text: newText } : todo
+                ) as typeof todos
+              )
+            }}
           />
         ))}
       </ul>
