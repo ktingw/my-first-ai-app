@@ -1,65 +1,106 @@
-import Image from "next/image";
+"use client"
+
+import { useEffect, useState } from "react"
+import TodoItem from "@/components/TodoItem"
+import type { Todo } from "@/types/todo"
 
 export default function Home() {
+  const [input, setInput] = useState("")
+  const [todos, setTodos] = useState<Todo[]>([])
+
+  const totalTodos = todos.length
+  const completedTodos = todos.filter((todo) => todo.done).length
+  const remainingTodos = totalTodos - completedTodos
+  const completionRate = totalTodos === 0 ? 0 : Math.round((completedTodos / totalTodos) * 100)
+
+  useEffect(() => {
+    const savedTodos = localStorage.getItem("todos")
+
+    if (savedTodos) {
+      setTodos(JSON.parse(savedTodos))
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todos))
+  }, [todos])
+
+  const addTodo = () => {
+    if (!input.trim()) return
+    setTodos([
+      ...todos,
+      {
+        id: Date.now(),
+        text: input,
+        done: false,
+      },
+    ])
+    setInput("")
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="max-w-md mx-auto mt-10 p-4">
+      <h1 className="text-2xl font-bold mb-4">Todo App</h1>
+
+      <div className="grid grid-cols-2 gap-3 mb-6 rounded border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+        <div>
+          <div className="text-gray-500">總數</div>
+          <div className="text-xl font-semibold">{totalTodos}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">已完成</div>
+          <div className="text-xl font-semibold">{completedTodos}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">剩餘</div>
+          <div className="text-xl font-semibold">{remainingTodos}</div>
+        </div>
+        <div>
+          <div className="text-gray-500">完成率</div>
+          <div className="text-xl font-semibold">{completionRate}%</div>
+        </div>
+      </div>
+
+      <div className="flex gap-2 mb-4">
+        <input
+          className="border p-2 flex-1 rounded border-slate-300 bg-white text-slate-900 outline-none transition focus:border-blue-500"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="輸入待辦"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") addTodo()
+          }}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+        <button
+          className="bg-blue-500 text-white px-4 rounded transition hover:bg-blue-600"
+          onClick={addTodo}
+        >
+          新增
+        </button>
+      </div>
+
+      <ul className="space-y-2">
+        {todos.length === 0 && (
+          <p className="text-gray-400 text-center mt-6">還沒有待辦事項 ✨</p>
+        )}
+        {todos.map((todo, i) => (
+          <TodoItem
+            key={todo.id}
+            text={todo.text}
+            done={todo.done}
+            onToggle={() => {
+              setTodos(
+                todos.map((todo, index) =>
+                  index === i ? { ...todo, done: !todo.done } : todo
+                )
+              )
+            }}
+            onDelete={() => {
+              setTodos(todos.filter((_, index) => index !== i))
+            }}
+          />
+        ))}
+      </ul>
+    </main>
+  )
 }
