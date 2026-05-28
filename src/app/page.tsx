@@ -92,7 +92,7 @@ export default function Home() {
               setTodos(
                 todos.map((todo, index) =>
                   index === i ? { ...todo, done: !todo.done } : todo
-                )
+                ) as typeof todos
               )
             }}
             onDelete={() => {
